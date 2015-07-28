@@ -11,12 +11,28 @@ object Https {
   trait TrustStoreConfig
   case class TrustServersByTrustStore(path: String, password: String) extends TrustStoreConfig
   case object TrustAnyServer extends TrustStoreConfig
-  
+
   trait KeyStoreConfig
   case class UseKeyStore(path: String, password: String) extends KeyStoreConfig
   case object DoNotUseKeyStore extends KeyStoreConfig
 
-  case class HttpsConfig(trustStoreConfig: TrustStoreConfig, keyStoreConfig: KeyStoreConfig = DoNotUseKeyStore, protocol: String = defaultProtocol)
+  trait BaseHttpsConfig {
+    def sslFactory: SSLSocketFactory
+    def hostNameVerifier: HostnameVerifier
+  }
+
+  case class HttpsConfig(trustStoreConfig: TrustStoreConfig, keyStoreConfig: KeyStoreConfig = DoNotUseKeyStore, protocol: String = defaultProtocol) extends BaseHttpsConfig {
+    def sslFactory: SSLSocketFactory = {
+      val sslContext = SSLContext.getInstance(protocol)
+      sslContext.init(keyManagers(keyStoreConfig), trustManagers(trustStoreConfig), new java.security.SecureRandom)
+      sslContext.getSocketFactory
+    }
+
+    def hostNameVerifier: HostnameVerifier = trustStoreConfig match {
+      case TrustServersByTrustStore(_, _) ⇒ HttpsURLConnection.getDefaultHostnameVerifier
+      case TrustAnyServer ⇒ TrustAllSslCertificates.allHostsValid
+    }
+  }
 
   def sslFactory(httpsConfig: HttpsConfig): SSLSocketFactory = {
     val sslContext = SSLContext.getInstance(httpsConfig.protocol)

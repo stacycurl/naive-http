@@ -5,12 +5,12 @@ import javax.net.ssl.HttpsURLConnection
 
 import io.shaka.http.Headers.toHeaders
 import io.shaka.http.Http._
-import io.shaka.http.Https.{HttpsConfig, sslFactory, hostNameVerifier}
+import io.shaka.http.Https.BaseHttpsConfig
 import io.shaka.http.IO.inputStreamToByteArray
 import io.shaka.http.Status._
 import io.shaka.http.proxy.{Proxy, noProxy}
 
-class ClientHttpHandler(proxy: Proxy = noProxy, httpsConfig: Option[HttpsConfig] = None, timeout: Timeout = tenSecondTimeout) extends HttpHandler {
+class ClientHttpHandler(proxy: Proxy = noProxy, httpsConfig: Option[BaseHttpsConfig] = None, timeout: Timeout = tenSecondTimeout) extends HttpHandler {
 
   override def apply(request: Request): Response = {
     val connection = createConnection(request.url, proxy)
@@ -49,8 +49,8 @@ class ClientHttpHandler(proxy: Proxy = noProxy, httpsConfig: Option[HttpsConfig]
     val connection = new URL(url).openConnection(proxy()).asInstanceOf[HttpURLConnection]
     (connection, httpsConfig) match {
       case (c: HttpsURLConnection, Some(config)) =>
-        c.setSSLSocketFactory(sslFactory(config))
-        c.setHostnameVerifier(hostNameVerifier(config.trustStoreConfig))
+        c.setSSLSocketFactory(config.sslFactory)
+        c.setHostnameVerifier(config.hostNameVerifier)
       case _ =>
     }
     connection.setUseCaches(false)
