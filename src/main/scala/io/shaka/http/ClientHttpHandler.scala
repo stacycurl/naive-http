@@ -11,8 +11,9 @@ import io.shaka.http.Status._
 import io.shaka.http.proxy.{Proxy, noProxy}
 
 class ClientHttpHandler(proxy: Proxy = noProxy, httpsConfig: Option[HttpsConfig] = None, timeout: Timeout = tenSecondTimeout) extends HttpHandler {
+  def isDefinedAt(request: Request): Boolean = true
 
-  override def apply(request: Request): Response = {
+  def apply(request: Request): Response = {
     val connection = createConnection(request.url, proxy)
     connection.setRequestMethod(request.method.name)
     request.headers.foreach {

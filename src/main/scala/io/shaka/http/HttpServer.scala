@@ -17,7 +17,7 @@ class HttpServer(private val usePort: Int = 0, otherLog: ToLog, sslConfig: HttpS
 
   val server = createServer(usePort, sslConfig)
   server.setExecutor(null)
-  server.createContext("/", new SunHttpHandlerAdapter((req) => respond("No handler defined!").status(NOT_FOUND)))
+  server.createContext("/", new SunHttpHandlerAdapter(PartialFunction.apply((req) => respond("No handler defined!").status(NOT_FOUND))))
 
   def start() = {
     val startedAt = System.nanoTime()
@@ -34,7 +34,9 @@ class HttpServer(private val usePort: Int = 0, otherLog: ToLog, sslConfig: HttpS
 
   def port = server.getAddress.getPort
 
-  def handler(handler: HttpHandler) = {
+  def handler(handler: Request ⇒ Response): HttpServer = partialHandler(PartialFunction.apply(handler))
+
+  def partialHandler(handler: HttpHandler): HttpServer = {
     server.removeContext("/")
     server.createContext("/", new SunHttpHandlerAdapter(handler))
     this

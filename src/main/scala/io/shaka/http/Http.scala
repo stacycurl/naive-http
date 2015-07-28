@@ -3,7 +3,7 @@ package io.shaka.http
 import io.shaka.http.proxy._
 
 object Http {
-  type HttpHandler = (Request) => (Response)
+  type HttpHandler = PartialFunction[Request, Response]
   type Url = String
   type Header = (HttpHeader, String)
   val tenSecondTimeout = Timeout(10000)
